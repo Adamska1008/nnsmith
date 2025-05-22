@@ -308,11 +308,21 @@ class BaseGen:
                 with AI:
                     boolean_result = AI.execute(
                         """
-                    通过{get_num_var_param}函数获取算子（op）的参数数量，通过{n_inst}函数获取算子的id，利用{new_sym}函数生成参数列表，并利用{node_t}函数生成算子。
+                    你将被提供一个BaseGen实例，你需要
+                    通过{get_num_var_param}函数获取算子（op）的参数数量，通过self的ir成员的{n_inst}方法获取算子的id，利用{new_sym}方法生成参数列表，并利用{node_t}函数生成算子。
                     使用随机方法，保证有{forward_prob}的概率生成forward算子，否则生成backward算子。
-                    使用{try_forward_insert}插入forward算子，反之使用{try_backward_insert}插入backward算子。
+                    使用{try_forward_insert}方法插入forward算子，反之使用{try_backward_insert}方法插入backward算子。
                     获取insert函数的返回值（是一个boolean值），并返回它。 
-""" 
+                    BaseGen实例：{self}
+""",
+                    node_t.get_num_var_param,
+                    self.ir.n_inst,
+                    self.new_sym,
+                    node_t,
+                    self.forward_prob,
+                    self.try_forward_insert,
+                    self.try_backward_insert,
+                    self,
                     )
                 if boolean_result:
                     return True
@@ -394,34 +404,63 @@ class BaseGen:
 
         # randomized enumeration over dtype_combs
         random.shuffle(dcombs)
-        for dcomb in dcombs:
-            if ndim_relation is None:
-                ret = []
-                for i, ndims in enumerate(ndim_list):
-                    candidates = self.filter_rank_dtype(
-                        ndims=ndims, dtype=dcomb[i], candidates=var_candidates
-                    )
-                    ret.append(random.choice(candidates))
-                return ret
-            else:
-                # candidates for 0-indexed tensor
-                topcands = self.filter_rank_dtype(
-                    ndims=ndim_list[0], dtype=dcomb[0], candidates=var_candidates
-                )
-                random.shuffle(topcands)
-                for tcand in topcands:
-                    ret = [tcand]
-                    for i, ndims in enumerate(ndim_list[1:]):
-                        required_ndim = ndim_relation[i + 1](self.ir.vars[tcand].ndims)
-                        if required_ndim not in ndim_list[i + 1]:
-                            break
-                        self.filter_rank_dtype(
-                            ndims=[required_ndim],
-                            dtype=dcomb[i + 1],
-                            candidates=var_candidates,
-                        )
-                    if len(ret) == len(ndim_list):
-                        return ret
+        with AI:
+            ret = AI.execute(
+"""
+请实现以下逻辑：
+1. 遍历数据类型组合列表 {dcombs}
+2. 如果 {ndim_relation} 为 None：
+   - 创建一个空列表 ret
+   - 遍历 {ndim_list} 和dcomb，对每个维度要求和数据类型：
+     - 使用 {filter_rank_dtype} 筛选出满足条件的候选变量，这个函数的candidates参数为{var_candidates}
+     - 随机选择一个候选变量加入 ret
+   - 返回 ret
+3. 如果 ndim_relation 不为 None：
+   - 使用 filter_rank_dtype 筛选出第一个张量的候选变量 topcands
+   - 随机打乱 topcands
+   - 遍历 topcands 中的每个候选变量 tcand：
+     - 初始化 ret 为 [tcand]
+     - 遍历后续的维度要求：
+       - 使用 {ndim_relation} 计算所需维度
+       - 如果所需维度不在允许范围内，跳出循环
+       - 使用 filter_rank_dtype 筛选满足条件的变量
+     - 如果 ret 长度等于 ndim_list 长度，返回 ret
+""",
+        dcombs,
+        ndim_relation,
+        ndim_list,
+        self.filter_rank_dtype,
+        var_candidates,
+        ndim_relation,
+            )
+        # for dcomb in dcombs:
+        #     if ndim_relation is None:
+        #         ret = []
+        #         for i, ndims in enumerate(ndim_list):
+        #             candidates = self.filter_rank_dtype(
+        #                 ndims=ndims, dtype=dcomb[i], candidates=var_candidates
+        #             )
+        #             ret.append(random.choice(candidates))
+        #         return ret
+        #     else:
+        #         # candidates for 0-indexed tensor
+        #         topcands = self.filter_rank_dtype(
+        #             ndims=ndim_list[0], dtype=dcomb[0], candidates=var_candidates
+        #         )
+        #         random.shuffle(topcands)
+        #         for tcand in topcands:
+        #             ret = [tcand]
+        #             for i, ndims in enumerate(ndim_list[1:]):
+        #                 required_ndim = ndim_relation[i + 1](self.ir.vars[tcand].ndims)
+        #                 if required_ndim not in ndim_list[i + 1]:
+        #                     break
+        #                 self.filter_rank_dtype(
+        #                     ndims=[required_ndim],
+        #                     dtype=dcomb[i + 1],
+        #                     candidates=var_candidates,
+        #                 )
+        #             if len(ret) == len(ndim_list):
+        #                 return ret
 
         raise ConstraintError("Cannot find desired combinations of tensor variables.")
 
