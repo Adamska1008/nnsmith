@@ -74,6 +74,90 @@ Also see [pygraphviz install guidance](https://pygraphviz.github.io/documentatio
 </div>
 </details>
 
+<details><summary><b>Using uv to manage the project</b> <i>[click]</i></summary>
+<div>
+
+To use [uv](https://github.com/astral-sh/uv) for dependency management and virtual environment setup, follow these steps:
+
+1. Install uv:
+   ```shell
+   pip install uv
+   ```
+
+2. Create a virtual environment and install dependencies:
+   ```shell
+   uv venv
+   uv pip install -r requirements/core.txt
+   uv pip install -r requirements/dev.txt
+   uv pip install -r requirements/exp.txt  # Optional, for experimental features
+   ```
+
+3. Activate the virtual environment:
+   - Windows: `.venv\Scripts\activate`
+   - Unix/MacOS: `source .venv/bin/activate`
+
+4. Run the project:
+   ```shell
+   nnsmith.model_gen model.type=onnx debug.viz=true
+   ```
+
+</div>
+</details>
+
+<details><summary><b>Running the project with torch</b> <i>[click]</i></summary>
+<div>
+
+To run the project using PyTorch, follow these steps:
+
+1. Ensure you have installed the torch dependency:
+   ```shell
+   pip install torch>=1.9.0
+   ```
+
+2. Generate a random model using torch:
+   ```shell
+   nnsmith.model_gen model.type=torch debug.viz=true
+   ```
+
+3. Execute the model:
+   ```shell
+   nnsmith.model_exec model.type=torch
+   ```
+
+</div>
+</details>
+
+<details><summary><b>Using uv to run the project</b> <i>[click]</i></summary>
+<div>
+
+To run the project using uv, follow these steps:
+
+1. Install uv:
+   ```shell
+   pip install uv
+   ```
+
+2. Create a virtual environment and install dependencies:
+   ```shell
+   uv venv
+   uv pip install -r requirements/core.txt
+   uv pip install -r requirements/dev.txt
+   uv pip install -r requirements/exp.txt  # Optional, for experimental features
+   ```
+
+3. Activate the virtual environment:
+   - Windows: `.venv\Scripts\activate`
+   - Unix/MacOS: `source .venv/bin/activate`
+
+4. Run the project:
+   ```shell
+   uv tool run --from nnsmith nnsmith.model_gen model.type=torch debug.viz=true
+   uv tool run --from nnsmith nnsmith.model_exec model.type=torch
+   ```
+
+</div>
+</details>
+
 ```shell
 # Generate a random model in "nnsmith_outputs/*"
 nnsmith.model_gen model.type=onnx debug.viz=true

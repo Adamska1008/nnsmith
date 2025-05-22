@@ -7,3 +7,4 @@ pygraphviz
 marko
 rich
 tomark
+uv>=0.1.0

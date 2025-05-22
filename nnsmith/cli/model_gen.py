@@ -14,7 +14,6 @@ from nnsmith.materialize import Model, TestCase
 from nnsmith.narrow_spec import auto_opset
 from nnsmith.util import hijack_patch_requires, mkdir, op_filter
 
-
 @hydra.main(version_base=None, config_path="../config", config_name="main")
 def main(cfg: DictConfig):
     # Generate a random ONNX model

@@ -23,7 +23,6 @@ from nnsmith.gir import GraphIR, InstExpr, InstIR
 from nnsmith.logging import MGEN_LOG, SMT_LOG
 from nnsmith.util import HAS_PYGRAPHVIZ, set_seed, viz_dot
 
-from lambdai import AI
 
 def concretize_graph(ir: GraphIR, model: z3.ModelRef) -> GraphIR:
     return ir.concretize(model)
@@ -291,31 +290,20 @@ class BaseGen:
         try:
             for _ in range(max_tensor_pick_time):
                 # should recreate a new instance since some attributes (like axis) should be initialized for each pick
-                # op_param_n = node_t.get_num_var_param()
-                # op_id = self.ir.n_inst()
-                # op_params = [
-                #     self.new_sym("op%s_%s" % (op_id, k)) for k in range(op_param_n)
-                # ]
+                op_param_n = node_t.get_num_var_param()
+                op_id = self.ir.n_inst()
+                op_params = [
+                    self.new_sym("op%s_%s" % (op_id, k)) for k in range(op_param_n)
+                ]
 
-                # op: AbsOpBase = node_t(*op_params)
+                op: AbsOpBase = node_t(*op_params)
 
-                # if random.uniform(0, 1) < self.forward_prob:
-                #     if self.try_forward_insert(op):
-                #         return True
-                # else:
-                #     if self.try_backward_insert(op):
-                #         return True
-                with AI:
-                    boolean_result = AI.execute(
-                        """
-                    通过{get_num_var_param}函数获取算子（op）的参数数量，通过{n_inst}函数获取算子的id，利用{new_sym}函数生成参数列表，并利用{node_t}函数生成算子。
-                    使用随机方法，保证有{forward_prob}的概率生成forward算子，否则生成backward算子。
-                    使用{try_forward_insert}插入forward算子，反之使用{try_backward_insert}插入backward算子。
-                    获取insert函数的返回值（是一个boolean值），并返回它。 
-""" 
-                    )
-                if boolean_result:
-                    return True
+                if random.uniform(0, 1) < self.forward_prob:
+                    if self.try_forward_insert(op):
+                        return True
+                else:
+                    if self.try_backward_insert(op):
+                        return True
         except ConstraintError:
             if MGEN_LOG.getEffectiveLevel() <= logging.DEBUG:
                 MGEN_LOG.debug(traceback.format_exc())
